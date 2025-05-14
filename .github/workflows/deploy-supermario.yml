@@ -56,4 +56,4 @@ jobs:
       - name: Deploy do Supermario
         run: |
           kubectl --insecure-skip-tls-verify apply -f manifest
-          kubectl --insecure-skip-tls-verify set image deployment/supermario docker-supermario=nginx:${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }}
+          kubectl --insecure-skip-tls-verify set image deployment/supermario docker-supermario=${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }}
