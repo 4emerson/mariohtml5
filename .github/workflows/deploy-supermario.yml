@@ -27,5 +27,6 @@ jobs:
 
       - name: Deploy do Supermario
         run: |
-          kubectl create deployment supermario --image=pengbai/docker-supermario --insecure-skip-tls-verify
-          kubectl expose deployment supermario --port=8080 --target-port=8080 --insecure-skip-tls-verify
+          # kubectl create deployment supermario --image=pengbai/docker-supermario --insecure-skip-tls-verify
+          # kubectl expose deployment supermario --port=8080 --target-port=8080 --insecure-skip-tls-verify
+          kubectl --insecure-skip-tls-verify apply -f manifest
