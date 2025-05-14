@@ -5,9 +5,37 @@ on:
 
 
 jobs:
+
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout do código
+        uses: actions/checkout@v2
+
+      - name: Configurar Docker para aceitar registries inseguros
+        run: |
+          echo '{"insecure-registries": ["${{ secrets.NEXUS_REGISTRY }}"] }' | sudo tee /etc/docker/daemon.json
+          cat /etc/docker/daemon.json
+          sudo systemctl restart docker
+
+      - name: Login no Docker do Nexus
+        run: |
+          echo "${{ secrets.NEXUS_PASS }}" | docker login ${{ secrets.NEXUS_REGISTRY }} -u ${{ secrets.NEXUS_USER }} --password-stdin
+
+      - name: Build da imagem
+        run: docker build -t ${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }} .
+
+      - name: Push da imagem para o Nexus
+        run: | 
+          docker tag ${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }} ${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:latest
+          docker push ${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }}
+          docker push ${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:latest
+
+
   deploy:
     runs-on: ubuntu-latest
-
+    needs: [build-and-push]
     steps: 
       - name: Checkout do código
         uses: actions/checkout@v2
@@ -27,6 +55,5 @@ jobs:
 
       - name: Deploy do Supermario
         run: |
-          # kubectl create deployment supermario --image=pengbai/docker-supermario --insecure-skip-tls-verify
-          # kubectl expose deployment supermario --port=8080 --target-port=8080 --insecure-skip-tls-verify
           kubectl --insecure-skip-tls-verify apply -f manifest
+          kubectl --insecure-skip-tls-verify set image deployment/supermario docker-supermario=nginx:${{ secrets.NEXUS_REGISTRY }}/${{ secrets.CONTAINER_IMAGE }}:${{ github.run_number }}
