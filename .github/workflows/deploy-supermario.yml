@@ -1,0 +1,31 @@
+name: Supermario - Deploy no k3s
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Checkout do código
+        uses: actions/checkout@v2
+
+      - name: Instalar kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.24.0'
+      
+      - name: Configurar kubeconfig
+        env:
+          KUBECONFIG_K3S: ${{ secrets.KUBECONFIG_K3S }}
+        run: |
+          mkdir ~/.kube/
+          echo "$KUBECONFIG_K3S" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Deploy do Supermario
+        run: |
+          kubectl create deployment supermario --image=pengbai/docker-supermario
+          kubectl expose deployment supermario --port=8080 --target-port=8080
